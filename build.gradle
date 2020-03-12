@@ -37,7 +37,7 @@ ext {
     bintrayBaseUrl = 'https://api.bintray.com/maven'
     bintrayRepository = 'maven'
     bintrayPackage = 'serenity-cucumber4'
-    projectDescription = 'Serenity Cucumber 4.x integration'
+    projectDescription = 'Serenity Cucumber 5.x integration'
 
     if (!project.hasProperty("bintrayUsername")) {
         bintrayUsername = 'wakaleo'
