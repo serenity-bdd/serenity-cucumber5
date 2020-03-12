@@ -69,7 +69,7 @@
         </dependency>
         <dependency>
             <groupId>net.serenity-bdd</groupId>
-            <artifactId>serenity-cucumber4</artifactId>
+            <artifactId>serenity-cucumber5</artifactId>
             <version>${serenity.cucumber.version}</version>
         </dependency>
         <dependency>

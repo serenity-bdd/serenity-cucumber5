@@ -36,7 +36,7 @@ repositories {
 ext {
     bintrayBaseUrl = 'https://api.bintray.com/maven'
     bintrayRepository = 'maven'
-    bintrayPackage = 'serenity-cucumber4'
+    bintrayPackage = 'serenity-cucumber5'
     projectDescription = 'Serenity Cucumber 5.x integration'
 
     if (!project.hasProperty("bintrayUsername")) {
@@ -163,14 +163,14 @@ publishing {
             pom.withXml {
                 asNode().children().last() + {
                     resolveStrategy = Closure.DELEGATE_FIRST
-                    name 'serenity-cucumber4'
+                    name 'serenity-cucumber5'
                     description 'Serenity Cucumber Integration'
 
-                    url 'https://github.com/serenity-bdd/serenity-cucumber4'
+                    url 'https://github.com/serenity-bdd/serenity-cucumber5'
                     scm {
-                        url 'scm:git:git@github.com:serenity-bdd/serenity-cucumber4.git'
-                        connection 'scm:git:git@github.com:serenity-bdd/serenity-cucumber4.git'
-                        developerConnection 'scm:git:git@github.com:serenity-bdd/serenity-cucumber4.git'
+                        url 'scm:git:git@github.com:serenity-bdd/serenity-cucumber5.git'
+                        connection 'scm:git:git@github.com:serenity-bdd/serenity-cucumber5.git'
+                        developerConnection 'scm:git:git@github.com:serenity-bdd/serenity-cucumber5.git'
                     }
                     licenses {
                         license {
@@ -217,7 +217,7 @@ bintray {
     pkg {
         repo = 'maven'
         userOrg = 'serenity'
-        name = 'serenity-cucumber4'
+        name = 'serenity-cucumber5'
         desc = 'Serenity Cucumber integration'
         licenses = ['Apache-2.0']
         labels = ['serenity','bdd','cucumber']
