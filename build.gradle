@@ -44,7 +44,7 @@ ext {
     }
 
     if (!project.hasProperty("nextVersion")) {
-        nextVersion = '5.0-SNAPSHOT'
+        nextVersion = '5.0.0'
     }
     //versionCounter = new ProjectVersionCounter(isRelease: project.hasProperty("releaseBuild"))
 }
