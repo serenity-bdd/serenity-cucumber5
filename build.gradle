@@ -44,7 +44,7 @@ ext {
     }
 
     if (!project.hasProperty("nextVersion")) {
-        nextVersion = '5.0.0'
+        nextVersion = ''
     }
 }
 
@@ -54,12 +54,12 @@ version = nextVersion
 
 task createNewVersionTag(type: Exec) {
     executable "sh"
-    args "-c", "git tag -f -a v$version -m'release tag'"
+    args "-c", "git tag -f -a v$nextVersion -m'release tag'"
 }
 
 task pushVersionTag(type: Exec, dependsOn: 'createNewVersionTag') {
     executable "sh"
-    args "-c", "git push -f origin v$version"
+    args "-c", "git push -f origin v$nextVersion"
 }
 
 task tagNewVersion() {
