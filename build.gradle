@@ -228,7 +228,6 @@ bintray {
             desc = "Serenity Cucumber 5 integration version ${version}"
             released = new Date()
             vcsTag = "v${version}"
-            attributes = []
         }
     }
 }
