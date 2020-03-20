@@ -46,11 +46,10 @@ ext {
     if (!project.hasProperty("nextVersion")) {
         nextVersion = '5.0.0'
     }
-    //versionCounter = new ProjectVersionCounter(isRelease: project.hasProperty("releaseBuild"))
 }
 
 group = 'net.serenity-bdd'
-version = nextVersion // versionCounter.nextVersion
+version = nextVersion
 
 
 task createNewVersionTag(type: Exec) {
@@ -224,10 +223,10 @@ bintray {
         vcsUrl = 'https://github.com/serenity-bdd/serenity-cucumber5.git'
 
         version {
-            name = version
-            desc = "Serenity Cucumber 5 integration version ${version}"
+            name = nextVersion
+            desc = "Serenity Cucumber 5 integration version ${nextVersion}"
             released = new Date()
-            vcsTag = "v${version}"
+            vcsTag = "v${nextVersion}"
         }
     }
 }
