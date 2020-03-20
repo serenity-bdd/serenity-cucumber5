@@ -1,22 +1,19 @@
-import net.serenitybdd.builds.ProjectVersionCounter
+//import net.serenitybdd.builds.ProjectVersionCounter
 
 buildscript {
     repositories {
         mavenLocal()
         jcenter()
     }
-    dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.5'
-    }
 }
 
-apply plugin: 'java'
-apply plugin: 'groovy'
-apply plugin: 'eclipse'
-apply plugin: 'idea'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
+plugins {
+    id "com.jfrog.bintray" version "1.+"
+    id 'java'
+    id 'groovy'
+    id 'maven'
+    id 'maven-publish'
+}
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -26,6 +23,10 @@ repositories {
     jcenter()
     maven() {
         url "http://dl.bintray.com/serenity/maven/"
+        credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
+            username = System.properties['bintrayUsername'] // Artifactory user name
+            password = System.properties['bintrayApiKey'] // Password or API Key
+        }
     }
 }
 
@@ -42,11 +43,14 @@ ext {
         bintrayApiKey = ''
     }
 
-    versionCounter = new ProjectVersionCounter(isRelease: project.hasProperty("releaseBuild"))
+    if (!project.hasProperty("nextVersion")) {
+        nextVersion = '5.0-SNAPSHOT'
+    }
+    //versionCounter = new ProjectVersionCounter(isRelease: project.hasProperty("releaseBuild"))
 }
 
 group = 'net.serenity-bdd'
-version = versionCounter.nextVersion
+version = nextVersion // versionCounter.nextVersion
 
 
 task createNewVersionTag(type: Exec) {
@@ -81,20 +85,20 @@ configurations.all {
     resolutionStrategy {
         // fail fast on dependency convergence problems
         //failOnVersionConflict()
-        force  "commons-collections:commons-collections:${commonsCollectionsVersion}",
-        "xml-apis:xml-apis:${xmlApiVersion}",
-       "commons-codec:commons-codec:${commonsCodecVersion}",
-        "com.google.code.gson:gson:${gsonVersion}"
+        force "commons-collections:commons-collections:${commonsCollectionsVersion}",
+                "xml-apis:xml-apis:${xmlApiVersion}",
+                "commons-codec:commons-codec:${commonsCodecVersion}",
+                "com.google.code.gson:gson:${gsonVersion}"
     }
 }
 
 dependencies {
-    compile ("net.serenity-bdd:serenity-core:${serenityCoreVersion}")
-    compile ("net.serenity-bdd:serenity-screenplay:${serenityCoreVersion}")
-    compile ("net.serenity-bdd:serenity-screenplay-webdriver:${serenityCoreVersion}")
+    compile("net.serenity-bdd:serenity-core:${serenityCoreVersion}")
+    compile("net.serenity-bdd:serenity-screenplay:${serenityCoreVersion}")
+    compile("net.serenity-bdd:serenity-screenplay-webdriver:${serenityCoreVersion}")
     compile "io.cucumber:cucumber-java:${cucumberJVMVersion}"
     compile("io.cucumber:cucumber-junit:${cucumberJVMVersion}") {
-            exclude group: "junit"
+        exclude group: "junit"
     }
     compile "io.cucumber:datatable-matchers:${cucumberDatatableMatchers}"
 
@@ -103,7 +107,7 @@ dependencies {
     compile "junit:junit:${junitVersion}"
     compile "com.google.code.gson:gson:${gsonVersion}"
 
-    testCompile ("ch.qos.logback:logback-classic:${logbackVersion}") {
+    testCompile("ch.qos.logback:logback-classic:${logbackVersion}") {
         exclude module: "slf4j-api"
     }
     testCompile "org.assertj:assertj-core:${assertjVersion}"
@@ -121,8 +125,8 @@ dependencies {
 
 jar {
     manifest {
-        attributes("Implementation-Title": "Serenity Cucumber Plugin",
-                   "Implementation-Version": project.version.toString())
+        attributes("Implementation-Title": "Serenity Cucumber 5 Plugin",
+                "Implementation-Version": project.version.toString())
     }
 }
 
@@ -204,7 +208,7 @@ publishing {
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:-options"
 }
-
+1
 bintray {
     user = bintrayUsername //this usually comes form gradle.properties file in ~/.gradle
     key = bintrayApiKey //this usually comes form gradle.properties file in ~/.gradle
@@ -212,11 +216,20 @@ bintray {
     publish = true
     pkg {
         repo = 'maven'
-        userOrg = 'serenity'
         name = 'serenity-cucumber5'
+        userOrg = 'serenity'
         desc = 'Serenity Cucumber integration'
         licenses = ['Apache-2.0']
-        labels = ['serenity','bdd','cucumber']
+        labels = ['serenity', 'bdd', 'cucumber']
+        vcsUrl = 'https://github.com/serenity-bdd/serenity-cucumber5.git'
+
+        version {
+            name = version
+            desc = "Serenity Cucumber 5 integration version ${version}"
+            released = new Date()
+            vcsTag = "v${version}"
+            attributes = []
+        }
     }
 }
 
