@@ -75,6 +75,56 @@ public class CucumberSerenityRunner extends ParentRunner<ParentRunner<?>> {
         Assertions.assertNoCucumberAnnotatedMethods(clazz);
 
         // Parse the options early to provide fast feedback about invalid options
+        RuntimeOptions runtimeOptions = buildRuntimeOptions(clazz);
+
+        setRuntimeOptions(runtimeOptions);
+
+        // Next parse the junit options
+        JUnitOptions junitPropertiesFileOptions = new JUnitOptionsParser()
+                .parse(CucumberProperties.fromPropertiesFile())
+                .build();
+
+        JUnitOptions junitAnnotationOptions = new JUnitOptionsParser()
+                .parse(clazz)
+                .build(junitPropertiesFileOptions);
+
+        JUnitOptions junitEnvironmentOptions = new JUnitOptionsParser()
+                .parse(CucumberProperties.fromEnvironment())
+                .build(junitAnnotationOptions);
+
+        JUnitOptions junitOptions = new JUnitOptionsParser()
+                .parse(CucumberProperties.fromSystemProperties())
+                .setStrict(runtimeOptions.isStrict())
+                .build(junitEnvironmentOptions);
+
+        this.bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
+
+        // Parse the features early. Don't proceed when there are lexer errors
+        FeatureParser parser = new FeatureParser(bus::generateId);
+        Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
+        FeaturePathFeatureSupplier featureSupplier = new FeaturePathFeatureSupplier(classLoader, runtimeOptions, parser);
+        this.features = featureSupplier.get();
+
+        // Create plugins after feature parsing to avoid the creation of empty files on lexer errors.
+        this.plugins = new Plugins(new PluginFactory(), runtimeOptions);
+
+        Configuration systemConfiguration = Injectors.getInjector().getInstance(Configuration.class);
+        SerenityReporter reporter = new SerenityReporter(systemConfiguration);
+        addSerenityReporterPlugin(plugins,reporter);
+
+        ObjectFactoryServiceLoader objectFactoryServiceLoader = new ObjectFactoryServiceLoader(runtimeOptions);
+        ObjectFactorySupplier objectFactorySupplier = new ThreadLocalObjectFactorySupplier(objectFactoryServiceLoader);
+        BackendSupplier backendSupplier = new BackendServiceLoader(clazz::getClassLoader, objectFactorySupplier);
+        TypeRegistryConfigurerSupplier typeRegistryConfigurerSupplier = new ScanningTypeRegistryConfigurerSupplier(classLoader, runtimeOptions);
+        ThreadLocalRunnerSupplier runnerSupplier = new ThreadLocalRunnerSupplier(runtimeOptions, bus, backendSupplier, objectFactorySupplier, typeRegistryConfigurerSupplier);
+        Predicate<Pickle> filters = new Filters(runtimeOptions);
+        children = features.stream()
+                .map(feature -> FeatureRunner.create(feature, filters, runnerSupplier, junitOptions))
+                .filter(runner -> !runner.isEmpty())
+                .collect(toList());
+    }
+
+	private static RuntimeOptions buildRuntimeOptions(Class clazz) {
         RuntimeOptions propertiesFileOptions = new CucumberPropertiesParser()
                 .parse(CucumberProperties.fromPropertiesFile())
                 .build();
@@ -106,58 +156,12 @@ public class CucumberSerenityRunner extends ParentRunner<ParentRunner<?>> {
             runtimeOptionsBuilder.addTagFilter(tagFilter);
         }
         runtimeOptionsBuilder.build(runtimeOptions);
+		return runtimeOptions;
+	}
 
-        // Next parse the junit options
-        JUnitOptions junitPropertiesFileOptions = new JUnitOptionsParser()
-                .parse(CucumberProperties.fromPropertiesFile())
-                .build();
-
-        JUnitOptions junitAnnotationOptions = new JUnitOptionsParser()
-                .parse(clazz)
-                .build(junitPropertiesFileOptions);
-
-        JUnitOptions junitEnvironmentOptions = new JUnitOptionsParser()
-                .parse(CucumberProperties.fromEnvironment())
-                .build(junitAnnotationOptions);
-
-        JUnitOptions junitOptions = new JUnitOptionsParser()
-                .parse(CucumberProperties.fromSystemProperties())
-                .setStrict(runtimeOptions.isStrict())
-                .build(junitEnvironmentOptions);
-
-        this.bus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
-
-        setRuntimeOptions(runtimeOptions);
-
-        // Parse the features early. Don't proceed when there are lexer errors
-        FeatureParser parser = new FeatureParser(bus::generateId);
-        Supplier<ClassLoader> classLoader = ClassLoaders::getDefaultClassLoader;
-        FeaturePathFeatureSupplier featureSupplier = new FeaturePathFeatureSupplier(classLoader, runtimeOptions, parser);
-        this.features = featureSupplier.get();
-
-        // Create plugins after feature parsing to avoid the creation of empty files on lexer errors.
-        this.plugins = new Plugins(new PluginFactory(), runtimeOptions);
-
-        Configuration systemConfiguration = Injectors.getInjector().getInstance(Configuration.class);
-        SerenityReporter reporter = new SerenityReporter(systemConfiguration);
-        addSerenityReporterPlugin(plugins,reporter);
-
-        ObjectFactoryServiceLoader objectFactoryServiceLoader = new ObjectFactoryServiceLoader(runtimeOptions);
-        ObjectFactorySupplier objectFactorySupplier = new ThreadLocalObjectFactorySupplier(objectFactoryServiceLoader);
-        BackendSupplier backendSupplier = new BackendServiceLoader(clazz::getClassLoader, objectFactorySupplier);
-        TypeRegistryConfigurerSupplier typeRegistryConfigurerSupplier = new ScanningTypeRegistryConfigurerSupplier(classLoader, runtimeOptions);
-        ThreadLocalRunnerSupplier runnerSupplier = new ThreadLocalRunnerSupplier(runtimeOptions, bus, backendSupplier, objectFactorySupplier, typeRegistryConfigurerSupplier);
-        Predicate<Pickle> filters = new Filters(runtimeOptions);
-        children = features.stream()
-                .map(feature -> FeatureRunner.create(feature, filters, runnerSupplier, junitOptions))
-                .filter(runner -> !runner.isEmpty())
-                .collect(toList());
-    }
-
-    private static RuntimeOptions DEFAULT_RUNTIME_OPTIONS;
+    private static RuntimeOptions DEFAULT_RUNTIME_OPTIONS = buildRuntimeOptions(Object.class);
     public static void setRuntimeOptions(RuntimeOptions runtimeOptions) {
         RUNTIME_OPTIONS.set(runtimeOptions);
-        DEFAULT_RUNTIME_OPTIONS = runtimeOptions;
     }
 
     public static RuntimeOptions currentRuntimeOptions() {
