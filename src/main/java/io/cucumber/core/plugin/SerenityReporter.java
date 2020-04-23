@@ -16,10 +16,12 @@ import net.serenitybdd.core.SerenityReports;
 import net.serenitybdd.cucumber.CucumberWithSerenity;
 import net.serenitybdd.cucumber.formatting.ScenarioOutlineDescription;
 import net.serenitybdd.cucumber.util.PathUtils;
+import net.serenitybdd.cucumber.util.StepDefinitionAnnotationReader;
 import net.thucydides.core.guice.Injectors;
 import net.thucydides.core.model.DataTable;
 import net.thucydides.core.model.TestStep;
 import net.thucydides.core.model.*;
+import net.thucydides.core.model.screenshots.StepDefinitionAnnotations;
 import net.thucydides.core.model.stacktrace.RootCauseAnalyzer;
 import net.thucydides.core.reports.ReportService;
 import net.thucydides.core.steps.*;
@@ -31,6 +33,7 @@ import org.junit.internal.AssumptionViolatedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -284,6 +287,12 @@ public class SerenityReporter implements Plugin, ConcurrentEventListener {
     }
 
     private void handleTestStepStarted(TestStepStarted event) {
+
+        StepDefinitionAnnotations.setScreenshotPreferencesTo(
+                StepDefinitionAnnotationReader
+                        .forStepDefinition(event.getTestStep().getCodeLocation())
+                        .getScreenshotPreferences());
+
         if (!(event.getTestStep() instanceof HookTestStep)) {
             if (event.getTestStep() instanceof PickleStepTestStep) {
                 PickleStepTestStep pickleTestStep = (PickleStepTestStep) event.getTestStep();
@@ -292,7 +301,6 @@ public class SerenityReporter implements Plugin, ConcurrentEventListener {
                     io.cucumber.core.internal.gherkin.ast.Step step = (io.cucumber.core.internal.gherkin.ast.Step) astNode.node;
                     if (!getContext().isAddingScenarioOutlineSteps()) {
                         getContext().queueStep(step);
-                        //getContext().queueStep();
                         getContext().queueTestStep(event.getTestStep());
                     }
                     if (getContext().isAScenarioOutline()) {
@@ -316,7 +324,9 @@ public class SerenityReporter implements Plugin, ConcurrentEventListener {
     private void handleTestStepFinished(TestStepFinished event) {
         if (!(event.getTestStep() instanceof HookTestStep)) {
             handleResult(event.getResult());
+            StepDefinitionAnnotations.clear();
         }
+
     }
 
     private void handleTestRunFinished(TestRunFinished event) {
