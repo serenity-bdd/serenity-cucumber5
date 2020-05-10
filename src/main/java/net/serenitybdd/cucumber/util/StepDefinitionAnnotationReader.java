@@ -1,13 +1,11 @@
 package net.serenitybdd.cucumber.util;
 
-import net.serenitybdd.cucumber.suiteslicing.ScenarioFilter;
 import net.thucydides.core.annotations.Screenshots;
 import net.thucydides.core.model.TakeScreenshots;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +18,7 @@ import static java.util.Arrays.stream;
 
 public class StepDefinitionAnnotationReader {
     private String stepDefinitionPath;
+    private TakeScreenshots screenshotDefaultLevel = TakeScreenshots.UNDEFINED;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StepDefinitionAnnotationReader.class);
 
@@ -27,8 +26,17 @@ public class StepDefinitionAnnotationReader {
         this.stepDefinitionPath = stepDefinitionPath;
     }
 
+    public StepDefinitionAnnotationReader(String stepDefinitionPath, TakeScreenshots screenshotDefaultLevel) {
+        this.screenshotDefaultLevel = screenshotDefaultLevel;
+        this.stepDefinitionPath = stepDefinitionPath;
+    }
+
     public static StepDefinitionAnnotationReader forStepDefinition(String stepDefinitionPath) {
         return new StepDefinitionAnnotationReader(stepDefinitionPath);
+    }
+
+    public static Builder withScreenshotLevel(TakeScreenshots screenshotLevel) {
+        return new Builder(screenshotLevel);
     }
 
     public TakeScreenshots getScreenshotPreferences() {
@@ -40,7 +48,7 @@ public class StepDefinitionAnnotationReader {
                 .filter(annotation -> annotation instanceof Screenshots)
                 .map(annotation -> asEnum((Screenshots) annotation))
                 .findFirst()
-                .orElse(TakeScreenshots.UNDEFINED);
+                .orElse(screenshotDefaultLevel);
     }
 
     private TakeScreenshots asEnum(Screenshots screenshotAnnotation) {
@@ -92,5 +100,18 @@ public class StepDefinitionAnnotationReader {
             LOGGER.warn("Could not analyse step definition method " + className + "." + methodName);
         }
         return new ArrayList<>();
+    }
+
+    public static class Builder {
+
+        private final TakeScreenshots screenshotLevel;
+
+        public Builder(TakeScreenshots screenshotLevel) {
+            this.screenshotLevel = screenshotLevel;
+        }
+
+        public StepDefinitionAnnotationReader forStepDefinition(String stepDefinitionPath) {
+            return new StepDefinitionAnnotationReader(stepDefinitionPath, screenshotLevel);
+        }
     }
 }
