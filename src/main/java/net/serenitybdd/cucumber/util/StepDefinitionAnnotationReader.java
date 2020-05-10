@@ -31,7 +31,6 @@ public class StepDefinitionAnnotationReader {
 
     public TakeScreenshots getScreenshotPreferences() {
         if (stepDefinitionPath == null) { return TakeScreenshots.UNDEFINED; }
-
         List<Annotation> stepDefinitionAnnotations = annotationsIn(className(), methodName());
         return stepDefinitionAnnotations.stream()
                 .filter(annotation -> annotation instanceof Screenshots)
@@ -57,11 +56,11 @@ public class StepDefinitionAnnotationReader {
     }
 
     private String className() {
+        stepDefinitionPath=stepDefinitionPath.replaceFirst("^([^\\s]*)(\\s)","");
         int lastOpeningParentheses = stepDefinitionPath.lastIndexOf("(");
         String qualifiedMethodName = stepDefinitionPath.substring(0, lastOpeningParentheses);
         int endOfClassName = qualifiedMethodName.lastIndexOf(".");
-        String qualifiedClassName = stepDefinitionPath.substring(0, endOfClassName);
-        return qualifiedClassName;
+        return stepDefinitionPath.substring(0, endOfClassName);
     }
 
     private String methodName() {
