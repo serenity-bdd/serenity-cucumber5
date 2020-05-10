@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.util.Arrays.stream;
 
@@ -30,8 +32,9 @@ public class StepDefinitionAnnotationReader {
     }
 
     public TakeScreenshots getScreenshotPreferences() {
-        if (stepDefinitionPath == null) { return TakeScreenshots.UNDEFINED; }
-
+        if (stepDefinitionPath == null) {
+            return TakeScreenshots.UNDEFINED;
+        }
         List<Annotation> stepDefinitionAnnotations = annotationsIn(className(), methodName());
         return stepDefinitionAnnotations.stream()
                 .filter(annotation -> annotation instanceof Screenshots)
@@ -57,11 +60,14 @@ public class StepDefinitionAnnotationReader {
     }
 
     private String className() {
+        Matcher matcher = Pattern.compile("^(\\w*\\s)").matcher(stepDefinitionPath);
+        if (matcher.lookingAt()) {
+            stepDefinitionPath = matcher.replaceFirst("");
+        }
         int lastOpeningParentheses = stepDefinitionPath.lastIndexOf("(");
         String qualifiedMethodName = stepDefinitionPath.substring(0, lastOpeningParentheses);
         int endOfClassName = qualifiedMethodName.lastIndexOf(".");
-        String qualifiedClassName = stepDefinitionPath.substring(0, endOfClassName);
-        return qualifiedClassName;
+        return stepDefinitionPath.substring(0, endOfClassName);
     }
 
     private String methodName() {
