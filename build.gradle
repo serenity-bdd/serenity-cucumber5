@@ -72,6 +72,8 @@ wrapper {
 
 test {
     include '**/When*'
+    include '**/Cucumber*'
+    include '**/ScenarioLineCount*'
     exclude '**/*$*'
     exclude '**/integration/**'
     exclude '**/samples/**'

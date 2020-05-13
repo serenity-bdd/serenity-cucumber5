@@ -1,8 +1,13 @@
 package net.serenitybdd.cucumber.suiteslicing;
 
 import com.google.common.collect.FluentIterable;
+import io.cucumber.core.feature.FeatureParser;
+import io.cucumber.core.feature.Options;
+import io.cucumber.core.internal.gherkin.AstBuilder;
+import io.cucumber.core.internal.gherkin.Parser;
+import io.cucumber.core.internal.gherkin.TokenMatcher;
 import io.cucumber.core.internal.gherkin.ast.*;
-import io.cucumber.core.plugin.FeatureFileLoader;
+import io.cucumber.core.runtime.FeaturePathFeatureSupplier;
 import net.serenitybdd.cucumber.util.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +16,9 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -23,6 +30,8 @@ import static java.util.stream.Collectors.toSet;
 public class CucumberScenarioLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CucumberScenarioLoader.class);
+    private final Supplier<ClassLoader> classLoader = CucumberScenarioLoader.class::getClassLoader;
+    private final FeatureParser parser = new FeatureParser(UUID::randomUUID);
     private final List<URI> featurePaths;
     private final TestStatistics statistics;
     private Map<Feature, URI> mapsForFeatures = new HashMap<>();
@@ -34,12 +43,21 @@ public class CucumberScenarioLoader {
 
     public WeightedCucumberScenarios load() {
         LOGGER.debug("Feature paths are {}", featurePaths);
-        List<WeightedCucumberScenario> weightedCucumberScenarios =
-                featurePaths.stream().map(featurePath->new FeatureFileLoader().getFeature(featurePath))
-            .map(getScenarios())
-            .flatMap(List::stream)
-            .collect(toList());
-        featurePaths.stream().collect(Collectors.toMap(f->f, featurePath->new FeatureFileLoader().getFeature(featurePath)));
+        Options featureOptions = () -> featurePaths;
+        Parser<GherkinDocument> gherkinParser = new Parser<>(new AstBuilder());
+        TokenMatcher matcher = new TokenMatcher();
+
+        FeaturePathFeatureSupplier supplier =
+            new FeaturePathFeatureSupplier(classLoader, featureOptions, parser);
+        IntStream.range(0, supplier.get().size())
+            .forEach(i -> mapsForFeatures.put(
+                gherkinParser.parse(supplier.get().get(i).getSource(), matcher).getFeature(),
+                supplier.get().get(i).getUri())
+            );
+
+        List<WeightedCucumberScenario> weightedCucumberScenarios = mapsForFeatures.keySet().stream()
+            .map(getScenarios()).flatMap(List::stream).collect(toList());
+
         return new WeightedCucumberScenarios(weightedCucumberScenarios);
     }
 
