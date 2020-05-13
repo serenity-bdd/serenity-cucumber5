@@ -1,26 +1,39 @@
 package net.serenitybdd.cucumber.suiteslicing;
 
+import io.cucumber.core.feature.FeatureParser;
+import io.cucumber.core.feature.Options;
+import io.cucumber.core.internal.gherkin.AstBuilder;
+import io.cucumber.core.internal.gherkin.Parser;
+import io.cucumber.core.internal.gherkin.TokenMatcher;
 import io.cucumber.core.internal.gherkin.ast.*;
-import io.cucumber.core.plugin.FeatureFileLoader;
+import io.cucumber.core.runtime.FeaturePathFeatureSupplier;
 import net.thucydides.core.util.Inflector;
 
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
 public class ScenarioLineCountStatistics implements TestStatistics {
 
-    private final List<URI> featurePaths;
+    private final Supplier<ClassLoader> classLoader = CucumberScenarioLoader.class::getClassLoader;
+    private final FeatureParser parser = new FeatureParser(UUID::randomUUID);
     private final List<TestScenarioResult> results;
 
     private ScenarioLineCountStatistics(List<URI> featurePaths) {
-        this.featurePaths = featurePaths;
-        this.results = featurePaths.stream().map(featurePath->new FeatureFileLoader().getFeature(featurePath))
+        Options featureOptions = () -> featurePaths;
+        Parser<GherkinDocument> gherkinParser = new Parser<>(new AstBuilder());
+        TokenMatcher matcher = new TokenMatcher();
+        FeaturePathFeatureSupplier supplier =
+            new FeaturePathFeatureSupplier(classLoader, featureOptions, parser);
+
+        this.results = supplier.get().stream().map(feature -> gherkinParser.parse(feature.getSource(), matcher).getFeature())
             .map(featureToScenarios())
             .flatMap(List::stream)
             .collect(toList());
