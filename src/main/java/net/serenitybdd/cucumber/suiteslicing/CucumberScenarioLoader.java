@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -97,7 +98,9 @@ public class CucumberScenarioLoader {
         if (Scenario.class.isAssignableFrom(scenario.getClass())) {
             return ((Scenario) scenario).getTags();
         } else {
-            return ((ScenarioOutline) scenario).getTags();
+            return Stream.of(((ScenarioOutline) scenario).getTags(), ((ScenarioOutline) scenario).getExamples()
+                .stream().flatMap(e -> e.getTags().stream()).collect(toList())).flatMap(Collection::stream)
+                .collect(Collectors.toList());
         }
     }
 

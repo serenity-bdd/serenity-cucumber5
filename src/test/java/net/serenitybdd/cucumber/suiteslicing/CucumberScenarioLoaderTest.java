@@ -49,5 +49,14 @@ public class CucumberScenarioLoaderTest {
                                                                      .tags()));
     }
 
+    @Test
+    public void shouldIncludeExamplesTagsOntoScenarios() throws Exception {
+        WeightedCucumberScenarios weightedCucumberScenarios = new CucumberScenarioLoader(newArrayList(new URI("classpath:samples/tagged_example_tables.feature")), testStatistics).load();
 
+        assertThat(weightedCucumberScenarios.scenarios, contains(MatchingCucumberScenario.with()
+                                                                    .featurePath("tagged_example_tables.feature")
+                                                                    .feature("Tagged Tables")
+                                                                    .scenario("This scenario should have two tables")
+                                                                    .tags("@small", "@big")));
+    }
 }
