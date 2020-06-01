@@ -45,9 +45,6 @@ public class LineFilters {
     public boolean examplesAreNotExcluded(Examples examples, URI featurePath) {
         if (lineFilters.isEmpty()) {
             return true;
-        }
-        if (lineFiltersContainFeaturePath(featurePath)) {
-            return false;
         } else {
             Optional<URI> uriForFeaturePath = getURIForFeaturePath(featurePath);
 
@@ -62,16 +59,10 @@ public class LineFilters {
     public boolean tableRowIsNotExcludedBy(TableRow tableRow, URI featurePath) {
         if (lineFilters.isEmpty()) {
             return true;
-        }
-        if (lineFiltersContainFeaturePath(featurePath)) {
-            return false;
         } else {
             Optional<URI> uriForFeaturePath = getURIForFeaturePath(featurePath);
             return uriForFeaturePath.filter(uri -> lineFilters.get(uri).contains(tableRow.getLocation().getLine())).isPresent();
         }
     }
 
-    private boolean lineFiltersContainFeaturePath(URI featurePath) {
-        return getURIForFeaturePath(featurePath) != null;
-    }
 }
