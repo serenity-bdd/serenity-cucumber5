@@ -47,16 +47,14 @@ public class LineFilters {
             return true;
         }
         if (lineFiltersContainFeaturePath(featurePath)) {
-            return false;
-        } else {
             Optional<URI> uriForFeaturePath = getURIForFeaturePath(featurePath);
-
             return uriForFeaturePath.filter(
                     uri -> examples.getTableBody().stream()
                             .anyMatch(
                                     row -> lineFilters.get(uri).contains(row.getLocation().getLine()))
             ).isPresent();
         }
+        return false;
     }
 
     public boolean tableRowIsNotExcludedBy(TableRow tableRow, URI featurePath) {
@@ -64,11 +62,10 @@ public class LineFilters {
             return true;
         }
         if (lineFiltersContainFeaturePath(featurePath)) {
-            return false;
-        } else {
             Optional<URI> uriForFeaturePath = getURIForFeaturePath(featurePath);
             return uriForFeaturePath.filter(uri -> lineFilters.get(uri).contains(tableRow.getLocation().getLine())).isPresent();
         }
+        return false;
     }
 
     private boolean lineFiltersContainFeaturePath(URI featurePath) {
