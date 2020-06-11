@@ -33,6 +33,7 @@ import org.junit.internal.AssumptionViolatedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -163,21 +164,23 @@ public class SerenityReporter implements Plugin, ConcurrentEventListener {
         StepEventBus.clearEventBusFor(featurePath);
     }
 
-    //private String relativeUriFrom(String fullPathUri) {
-    //TODOI - still needed ?
-    private URI relativeUriFrom(URI fullPathUri) {
-        /*String featuresRoot = File.separatorChar + FEATURES_ROOT_PATH + File.separatorChar;
-        if (fullPathUri.contains(featuresRoot)) {
-            return fullPathUri.substring(fullPathUri.lastIndexOf(featuresRoot) + FEATURES_ROOT_PATH.length() + 2);
+    private String relativeUriFrom(URI fullPathUri) {
+        String pathURIAsString = fullPathUri.toString();
+        String featuresRoot = File.separatorChar + FEATURES_ROOT_PATH + File.separatorChar;
+        if (pathURIAsString.contains(featuresRoot)) {
+            return pathURIAsString.substring(pathURIAsString.lastIndexOf(featuresRoot) + FEATURES_ROOT_PATH.length() + 2);
         } else {
-            return fullPathUri;
-        }*/
-        return fullPathUri;
+            return pathURIAsString;
+        }
     }
 
     private Optional<Feature> featureFrom(URI featureFileUri) {
 
-        System.out.println("Feature from " + featureFileUri);
+        LOGGER.info("Running feature from " + featureFileUri.toString());
+        String featuresRoot = File.separatorChar + FEATURES_ROOT_PATH + File.separatorChar;
+        if(!featureFileUri.toString().contains(featuresRoot)) {
+            LOGGER.warn("Feature from " + featureFileUri + " is not under the 'features' directory. Requirements report will not be correctly generated!");
+        }
         String defaultFeatureId = PathUtils.getAsFile(featureFileUri).getName().replace(".feature", "");
         String defaultFeatureName = Inflector.getInstance().humanize(defaultFeatureId);
 
@@ -202,13 +205,8 @@ public class SerenityReporter implements Plugin, ConcurrentEventListener {
         }
     }
 
-    private Story userStoryFrom(Feature feature, URI featureFileUri) {
-
-        //TODO check if conversion is OK
-        String featureFileUriString = featureFileUri.toString();
-        //Story userStory = Story.withIdAndPath(TestSourcesModel.convertToId(feature.getName()), feature.getName(), featureFileUri).asFeature();
+    private Story userStoryFrom(Feature feature, String featureFileUriString) {
         Story userStory = Story.withIdAndPath(TestSourcesModel.convertToId(feature.getName()), feature.getName(), featureFileUriString).asFeature();
-
         if (!isEmpty(feature.getDescription())) {
             userStory = userStory.withNarrative(feature.getDescription());
         }
@@ -462,8 +460,6 @@ public class SerenityReporter implements Plugin, ConcurrentEventListener {
         if (CucumberWithSerenity.currentRuntimeOptions() == null) {
             return new ArrayList<>();
         } else {
-            //TODO - check what is with CucumberWithSerenity.currentRuntimeOptions().getNameFilters
-            //return CucumberWithSerenity.currentRuntimeOptions().getTagFilters();
             return CucumberWithSerenity.currentRuntimeOptions().getTagExpressions();
         }
     }
