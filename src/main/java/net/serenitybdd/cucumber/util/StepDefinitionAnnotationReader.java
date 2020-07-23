@@ -72,14 +72,24 @@ public class StepDefinitionAnnotationReader {
         if (matcher.lookingAt()) {
             stepDefinitionPath = matcher.replaceFirst("");
         }
-        int lastOpeningParentheses = stepDefinitionPath.lastIndexOf("(");
+        int lastOpeningParentheses;
+        if (stepDefinitionPath.contains("(")) {
+            lastOpeningParentheses = stepDefinitionPath.lastIndexOf("(");
+        } else {
+            lastOpeningParentheses = stepDefinitionPath.toCharArray().length;
+        }
         String qualifiedMethodName = stepDefinitionPath.substring(0, lastOpeningParentheses);
         int endOfClassName = qualifiedMethodName.lastIndexOf(".");
         return stepDefinitionPath.substring(0, endOfClassName);
     }
 
     private String methodName() {
-        int lastOpeningParentheses = stepDefinitionPath.lastIndexOf("(");
+        int lastOpeningParentheses;
+        if (stepDefinitionPath.contains("(")) {
+            lastOpeningParentheses = stepDefinitionPath.lastIndexOf("(");
+        } else {
+            lastOpeningParentheses = stepDefinitionPath.toCharArray().length;
+        }
         String qualifiedMethodName = stepDefinitionPath.substring(0, lastOpeningParentheses);
         int startOfMethodName = qualifiedMethodName.lastIndexOf(".") + 1;
         return stepDefinitionPath.substring(startOfMethodName, lastOpeningParentheses);
