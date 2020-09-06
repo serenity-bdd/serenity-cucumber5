@@ -4,11 +4,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 public class CucumberScenarioLoaderTest {
@@ -58,5 +59,39 @@ public class CucumberScenarioLoaderTest {
                                                                     .feature("Tagged Tables")
                                                                     .scenario("This scenario should have two tables")
                                                                     .tags("@small", "@big")));
+    }
+
+    @Test
+    public void scenariosOfAllSlicesBetweenAllJvmShouldBeTheSame() throws URISyntaxException {
+        List<URI> featurePaths = newArrayList(new URI("classpath:samples/feature_pending_tag.feature"),
+            new URI("classpath:samples/multiple_jira_issues.feature"),
+            new URI("classpath:samples/multiple_scenarios.feature"),
+            new URI("classpath:samples/scenario_with_table_in_background_steps.feature"),
+            new URI("classpath:samples/tagged_example_tables.feature"));
+        int sliceCount = 5;
+
+        List<WeightedCucumberScenarios> jvm1Slices = new CucumberScenarioLoader(featurePaths, new DummyStatsOfWeightingOne()).load()
+            .sliceInto(sliceCount);
+
+        List<WeightedCucumberScenarios> jvm2Slices = new CucumberScenarioLoader(featurePaths, new DummyStatsOfWeightingOne()).load()
+            .sliceInto(sliceCount);
+
+        for (int i = 0; i < jvm1Slices.size(); i++) {
+            assertThat(jvm1Slices.get(i).scenarios, contains(buildMatchingCucumberScenario(jvm2Slices.get(i))));
+        }
+    }
+
+    private MatchingCucumberScenario[] buildMatchingCucumberScenario(WeightedCucumberScenarios weightedCucumberScenarios) {
+        List<MatchingCucumberScenario> list = new ArrayList<>();
+        weightedCucumberScenarios.scenarios.forEach(s -> {
+            MatchingCucumberScenario match = MatchingCucumberScenario.with()
+                .feature(s.feature)
+                .featurePath(s.featurePath)
+                .scenario(s.scenario);
+
+            list.add(match);
+        });
+
+        return list.toArray(new MatchingCucumberScenario[list.size()]);
     }
 }

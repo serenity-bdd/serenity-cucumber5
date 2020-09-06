@@ -1,7 +1,5 @@
 package net.serenitybdd.cucumber.suiteslicing;
 
-import com.google.common.collect.Iterables;
-
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
@@ -16,7 +14,6 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import static java.math.BigDecimal.ZERO;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.ObjectUtils.compare;
 import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
@@ -49,7 +46,7 @@ public class WeightedCucumberScenarios {
         List<List<WeightedCucumberScenario>> allScenarios = IntStream.rangeClosed(1, sliceCount).mapToObj(initialiseAs -> new ArrayList<WeightedCucumberScenario>()).collect(toList());
 
         scenarios.stream()
-            .sorted(bySlowestFirst())
+            .sorted(bySlowestFirst().thenComparing(byFeaturePathAscending()))
             .forEach(scenario -> allScenarios.stream().min(byLowestSumOfDurationFirst()).get().add(scenario));
 
         return allScenarios.stream().map(WeightedCucumberScenarios::new).collect(toList());
@@ -93,6 +90,13 @@ public class WeightedCucumberScenarios {
 
     private static Comparator<WeightedCucumberScenario> bySlowestFirst() {
         return (item1, item2) -> compare(item2.weighting(), item1.weighting());
+    }
+
+    /** Ensure the order of scenarios with the same weighting. This is to prevent scenarios getting skipped from
+     * batch or fork. Use featurePath due to unique file name.
+     * */
+    private static Comparator<WeightedCucumberScenario> byFeaturePathAscending() {
+        return (item1, item2) -> compare(item1.featurePath, item2.featurePath);
     }
 
     private static Comparator<List<WeightedCucumberScenario>> byLowestSumOfDurationFirst() {
