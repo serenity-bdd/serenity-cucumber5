@@ -888,7 +888,6 @@ public class SerenityReporter implements Plugin, ConcurrentEventListener {
     /*private String embeddedTableDataIn(PickleStepTestStep currentStep) {
         if (currentStep.getStep().getArgument() != null ) {
             StepArgument stepArgument = currentStep.getStep().getArgument();
-            System.out.println("Step argument " + stepArgument.getClass());
             //if (stepArgument instanceof PickleTable) {
             if (stepArgument instanceof DataTableArgument) {
                 List<Map<String, Object>> rowList = new ArrayList<Map<String, Object>>();
@@ -906,7 +905,6 @@ public class SerenityReporter implements Plugin, ConcurrentEventListener {
     private String embeddedTableDataIn(PickleStepTestStep currentStep) {
         if (currentStep.getStep().getArgument() != null) {
             StepArgument stepArgument = currentStep.getStep().getArgument();
-            System.out.println("Step argument " + stepArgument.getClass());
             //if (stepArgument instanceof PickleTable) {
             if (stepArgument instanceof DataTableArgument) {
                 List<Map<String, Object>> rowList = new ArrayList<Map<String, Object>>();
